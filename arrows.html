@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width:device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="flag-favicon.ico">
+    <title>Play Tag!</title>
+    <style>
+        body {
+            background-color:#30b027;
+            margin:0;
+            overflow: hidden;
+        }
+        .body-div {
+            height: 100vh;
+            width: 100%;
+            position: absolute;
+        }
+        .player1, .player2, .ball {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 5px;
+            border: none;
+            top: 50%;
+        }
+        .player1 {
+            background-color: red;
+            left: 5%;
+            z-index: -1;
+        }
+        .player2 {
+            background-color: blue;
+            left: 95%;
+            z-index: -2;
+        }
+        .ball {
+            display: none;
+            background-color: white;
+            height: 40px;
+            width: 40px;
+            border: 10px dashed black;
+            left: 50%;
+            z-index: -1;
+        }
+        .net1, .net2 {
+            display: none;
+            position: absolute;
+            width: 80px;
+            height: 120px;
+            top: 50%;
+            background-color: transparent;
+            border: 5px solid gray;
+        }
+        .net1 {
+            border-right: transparent;
+        }
+        .net2 {
+            right: 0;
+            border-left: transparent;
+        }
+        .invincible-bar {
+            position: absolute;
+            width: 0px;
+            height: 5px;
+            background-color: white;
+            border-radius: 4px;
+            display: hidden;
+            z-index: -1;
+        }
+        .timer {
+            width: 80px;
+            background-color: #000000b3;
+            margin: auto;
+            margin-top: 10px;
+            border-radius: 15px;
+            text-align: center;
+            padding: 8px 0;
+            z-index: 1;
+        }
+        .timer-text {
+            color: white;
+            margin: 0px;
+            font-size: 20px;
+        }
+        .end-screen-background {
+            position: absolute;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            background-color: #000000b3;
+            top: 0;
+            left: 0;
+        }
+        .end-screen {
+            width: 60%;
+            height: 80%;
+            background-color: #23aa23;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .large-text {
+            font-size: 30px;
+            color: white;
+        }
+        .small-text {
+            font-size: 20px;
+            color: white;
+            margin: 15px;
+        }
+        .restart-button {
+            font-size: 25px;
+            margin-top: 15px;
+            color: #23aa23;
+            cursor: pointer;
+            background-color: white;
+            border: none;
+            border-radius: 6px;
+            display: block;
+            position: absolute;
+            left: 50%;
+            -ms-transform: translateX(-50%);
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body onload="loadThings()">
+    <div class="body-div" id="bodyDiv"></div>
+    <div class="player1" id="player1">
+    </div>
+    <div class="player2" id="player2">
+    </div>
+    <div class="invincible-bar" id="invincibleBar"></div>
+    <div class="ball" id="ball">
+    </div>
+    <div class="net1" id="net1">
+    </div>
+    <div class="net2" id="net2">
+    </div>
+    <div class="timer" id="timer">
+        <p class="timer-text" id="timerText">1:00</p>
+    </div>
+    <div class="end-screen-background" id="endScreenBackground">
+        <div class="end-screen" id="endScreen">
+            <p class="large-text" id="winnerText">Nobody Wins!</p>
+            <p class="small-text">Time tagged:</p>
+            <p class="small-text" style="display:inline-block" id="redSecondsText">Red: </p>
+            <p class="small-text" style="display:inline-block" id="blueSecondsText">Blue: </p>
+            <button onclick="restart()" class="restart-button" id="restartButton">Play Again</button>
+        </div>
+    </div>
+<script>
+    var player1=document.getElementById("player1");
+    var player2=document.getElementById("player2");
+    var invincibleBar=document.getElementById("invincibleBar");
+    var timer=document.getElementById("timer");
+    var timerText=document.getElementById("timerText");
+    var endScreenBackground=document.getElementById("endScreenBackground");
+    var endScreen=document.getElementById("endScreen");
+    var ball=document.getElementById("ball");
+    var net1=document.getElementById("net1");
+    var net2=document.getElementById("net2");
+    var bodyDiv=document.getElementById("bodyDiv");
+    var restartButton=document.getElementById("restartButton");
+    var p1UpTimer;
+    var p1DownTimer;
+    var p1LeftTimer;
+    var p1RightTimer;
+    var p2UpTimer;
+    var p2DownTimer;
+    var p2LeftTimer;
+    var p2RightTimer;
+    var gamemode="tag";
+    var invincible="none";
+    var tagged="player1";
+    var pressedKeys={};
+    var seconds=0;
+    var minutes=1;
+    var redTaggedSeconds=0;
+    var blueTaggedSeconds=0;
+    var redTaggedMinutes=0;
+    var blueTaggedMinutes=0;
+    var startingTagger;
+    var winningText="Error: winner cannot be calculated";
+    var playerTimer=window.setInterval(checkPlayer,1);
+    var collisionTimer=window.setInterval(checkCollision,1);
+    var invincibleTimer=window.setInterval(changeInvincibleBar,8);
+    var timerTimer=window.setInterval(changeTimer,1000);
+    window.onkeyup = function(e) {pressedKeys[e.keyCode] = false; }
+    window.onkeydown = function(e) { pressedKeys[e.keyCode] = true; }
+    window.addEventListener("keyup", (event) => {
+        
+    });
+    window.addEventListener("keydown", (event) => {
+        
+    });
+    function changeTimer(){
+        seconds-=1;
+        if(tagged=="player1"){
+            redTaggedSeconds+=1;
+            if(redTaggedSeconds<0){
+                redTaggedSeconds=0;
+                redTaggedMinutes+=1;
+            }
+        }
+        else if(tagged=="player2"){
+            blueTaggedSeconds+=1;
+            if(blueTaggedSeconds<0){
+                blueTaggedSeconds=0;
+                blueTaggedMinutes+=1;
+            }
+        }
+        if(minutes==0&&seconds==55){
+            endGame();
+        }
+        if(seconds<0){
+            seconds=59;
+            minutes-=1;
+        }
+        if(seconds>=10){
+            timerText.innerText=minutes+":"+seconds;
+        }
+        else if(seconds<10){
+            timerText.innerText=minutes+":0"+seconds;
+        }
+    }
+    function restart(){
+        endScreenBackground.style.display="none";
+        playerTimer=window.setInterval(checkPlayer,1);
+        collisionTimer=window.setInterval(checkCollision,1);
+        timerTimer=window.setInterval(changeTimer,1000);
+        timerText.innerText="1:00";
+        pressedKeys={};
+        seconds=0;
+        minutes=1;
+        redTaggedSeconds=0;
+        blueTaggedSeconds=0;
+        redTaggedMinutes=0;
+        blueTaggedMinutes=0;
+        player1.style.top=50+"%";
+        player1.style.left=5+"%";
+        player2.style.top=50+"%";
+        player2.style.left=95+"%";
+        loadThings();
+    }
+    function endGame(){
+        clearInterval(timerTimer);
+        clearInterval(playerTimer);
+        clearInterval(collisionTimer);
+        if(redTaggedMinutes==blueTaggedMinutes){
+            if(redTaggedSeconds==blueTaggedSeconds){
+                winningText="Game Tied!";
+            }
+            else if(redTaggedSeconds<blueTaggedSeconds){
+                winningText="Red Wins!";
+            }
+            else if(blueTaggedSeconds<redTaggedSeconds){
+                winningText="Blue Wins!";
+            }
+        }
+        else if(redTaggedMinutes<blueTaggedMinutes){
+            winningText="Red Wins!";
+        }
+        if(blueTaggedMinutes<redTaggedMinutes){
+            winningText="Blue Wins!";
+        }
+        endScreenBackground.style.display="flex";
+        document.getElementById("winnerText").innerText=winningText;
+        if(redTaggedSeconds<10){
+            document.getElementById("redSecondsText").innerText="Red: "+redTaggedMinutes+":0"+redTaggedSeconds;
+        }
+        else if(redTaggedSeconds>=10){
+            document.getElementById("redSecondsText").innerText="Red: "+redTaggedMinutes+":"+redTaggedSeconds;;
+        }
+        if(blueTaggedSeconds<10){
+            document.getElementById("blueSecondsText").innerText="Blue: "+blueTaggedMinutes+":0"+blueTaggedSeconds;
+        }
+        else if(blueTaggedSeconds>=10){
+            document.getElementById("blueSecondsText").innerText="Blue: "+blueTaggedMinutes+":"+blueTaggedSeconds;;
+        }
+    }
+    function checkCollision(){
+        if(isCollision(player1,player2)){
+            if(tagged=="player1"&&invincible=="none"){
+                player2.style.opacity=50+"%";
+                player2.style.zIndex=-1;
+                player1.style.opacity=100+"%";
+                player1.style.zIndex=-2;
+                invincible="player1";
+                invincibleBar.style.width=60+"px";
+                tagged="player2";
+            }
+            else if(tagged=="player2"&&invincible=="none"){
+                player1.style.opacity=50+"%";
+                player1.style.zIndex=-1;
+                player2.style.opacity=100+"%";
+                player2.style.zIndex=-2;
+                invincible="player2";
+                invincibleBar.style.width=60+"px";
+                tagged="player1";
+            }
+        }
+    }
+    function checkPlayer(){
+        if(pressedKeys[87]){
+            player1.style.top=player1.offsetTop-2+"px";
+        }
+        if(pressedKeys[83]){
+            player1.style.top=player1.offsetTop+2+"px";
+        }
+        if(pressedKeys[65]){
+            player1.style.left=player1.offsetLeft-2+"px";
+        }
+        if(pressedKeys[68]){
+            player1.style.left=player1.offsetLeft+2+"px";
+        }
+        if(pressedKeys[38]){
+            player2.style.top=player2.offsetTop-2+"px";
+        }
+        if(pressedKeys[40]){
+            player2.style.top=player2.offsetTop+2+"px";
+        }
+        if(pressedKeys[37]){
+            player2.style.left=player2.offsetLeft-2+"px";
+        }
+        if(pressedKeys[39]){
+            player2.style.left=player2.offsetLeft+2+"px";
+        }
+        if(player1.offsetLeft<0){
+            player1.style.left=0;
+        }
+        if(player2.offsetLeft<0){
+            player2.style.left=0;
+        }
+        if(player1.offsetTop<0){
+            player1.style.top=0;
+        }
+        if(player2.offsetTop<0){
+            player2.style.top=0;
+        }
+        if(player1.offsetLeft+player1.offsetWidth>bodyDiv.offsetWidth){
+            player1.style.left=bodyDiv.offsetWidth-player1.offsetWidth+"px";
+        }
+        if(player2.offsetLeft+player2.offsetWidth>bodyDiv.offsetWidth){
+            player2.style.left=bodyDiv.offsetWidth-player2.offsetWidth+"px";
+        }
+        if(player1.offsetTop+player1.offsetHeight>bodyDiv.offsetHeight){
+            player1.style.top=bodyDiv.offsetHeight-player1.offsetHeight+"px";
+        }
+        if(player2.offsetTop+player2.offsetHeight>bodyDiv.offsetHeight){
+            player2.style.top=bodyDiv.offsetHeight-player2.offsetHeight+"px";
+        }
+        if(invincibleBar.offsetWidth<=0){
+            invincible="none";
+            invincibleBar.style.display="hidden";
+        }
+        if(tagged=="player2"){
+            invincibleBar.style.left=player1.offsetLeft+"px";
+            invincibleBar.style.top=player1.offsetTop+"px";
+        }
+        else if(tagged=="player1"){
+            invincibleBar.style.left=player2.offsetLeft+"px";
+            invincibleBar.style.top=player2.offsetTop+"px";
+        }
+    }
+    function changePosition(player,direction){
+        if(player=="player1"){
+            switch (direction){
+                case "up":
+                    player1.style.top=player1.offsetTop-2+"px";
+                    break;
+                case "down":
+                    player1.style.top=player1.offsetTop+2+"px";
+                    break;
+                case "left":
+                    player1.style.left=player1.offsetLeft-2+"px";
+                    break;
+                case "right":
+                    player1.style.left=player1.offsetLeft+2+"px";
+                    break;
+            }
+        }
+        else if(player=="player2"){
+            switch (direction){
+                case "up":
+                    player2.style.top=player2.offsetTop-2+"px";
+                    break;
+                case "down":
+                    player2.style.top=player2.offsetTop+2+"px";
+                    break;
+                case "left":
+                    player2.style.left=player2.offsetLeft-2+"px";
+                    break;
+                case "right":
+                    player2.style.left=player2.offsetLeft+2+"px";
+                    break;
+            }
+        }
+    }
+    function changeInvincibleBar(){
+        if(invincibleBar.offsetWidth>0){
+            invincibleBar.style.display="block";
+            invincibleBar.style.width=invincibleBar.offsetWidth-1+"px";
+        }
+    }
+    function isCollision(item1,item2){
+        if (
+           item1.offsetLeft+item1.offsetWidth>=item2.offsetLeft &&
+           item1.offsetLeft<=item2.offsetLeft+item2.offsetWidth &&
+           item1.offsetTop+item1.offsetHeight>=item2.offsetTop &&
+           item1.offsetTop<=item2.offsetTop+item2.offsetHeight
+          ){
+           return true;
+        }
+        else{return false;}
+    }
+    function loadThings(){
+        player2.style.left=player2.offsetLeft-player2.offsetWidth+"px";
+        ball.style.left=ball.offsetLeft-ball.offsetWidth/2+"px";
+        ball.style.top=ball.offsetTop-ball.offsetHeight/2+"px";
+        net1.style.top=net1.offsetTop-net1.offsetHeight/2+"px";
+        net2.style.top=net2.offsetTop-net2.offsetHeight/2+"px";
+        player1.style.top=player1.offsetTop-player1.offsetHeight/2+"px";
+        player2.style.top=player2.offsetTop-player2.offsetHeight/2+"px";
+        if(gamemode=="soccer"){
+            ball.style.display="block";
+            net1.style.display="block";
+            net2.style.display="block";
+        }
+        if(gamemode=="tag"){
+            startingTagger=Math.floor(Math.random() * 2);
+            if(startingTagger==1){
+                tagged="player1";
+            } else {
+                tagged="player2";
+            }
+            if(tagged=="player1"){
+                player1.style.opacity=50+"%";
+            }
+            else if(tagged=="player2"){
+                player2.style.opacity=50+"%";
+            }
+        }
+    }
+    //make a graph/bar at the endscreen that has the percentages each player was tagged in a line ----------
+    //make a mode where there is an object that whoever touches gets a point and it moves to a random location each time it's touched
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
