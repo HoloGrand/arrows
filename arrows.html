@@ -15,6 +15,7 @@
             height: 100vh;
             width: 100%;
             position: absolute;
+            z-index: -1;
         }
         .player1, .player2, .ball {
             position: absolute;
@@ -68,20 +69,47 @@
             display: hidden;
             z-index: -1;
         }
-        .timer {
-            width: 80px;
+        .timer-div {
+            width: 134px;
+            margin: auto;
+            margin-top: 5px;
+            margin-bottom: 0;
+        }
+        .timer, .bottom-timer {
+            width: 65px;
+            height: 32px;
             background-color: #000000b3;
             margin: auto;
-            margin-top: 10px;
+            margin-top: 0;
             border-radius: 15px;
             text-align: center;
-            padding: 8px 0;
+            padding-top: 3px;
             z-index: 1;
+            display: auto;
+            user-select: none;
+            margin-top: 4px;
+            display: block;
+        }
+        .pause-button, .restart-icon {
+            margin: 0;
+            width: 17px;
+            display: inline-block;
+            cursor: pointer;
+            color: white;
+            margin-top: 5px;
+        }
+        .restart-icon {
+            width: 19px;
         }
         .timer-text {
             color: white;
             margin: 0px;
-            font-size: 20px;
+            font-size: 23px;
+            display: inline-block;
+            margin-right: 1px;
+            margin-bottom: 2px;
+            margin-top: 1px;
+            padding-bottom: 0px;
         }
         .end-screen-background {
             position: absolute;
@@ -139,8 +167,14 @@
     </div>
     <div class="net2" id="net2">
     </div>
-    <div class="timer" id="timer">
-        <p class="timer-text" id="timerText">1:00</p>
+    <div class="timer-div">
+        <div class="timer" id="timer">
+            <p class="timer-text" id="timerText">1:00</p>
+        </div>
+        <div class="bottom-timer">
+            <img src="pause.png" alt="| |" class="pause-button" id="pauseButton" onclick="changePausedness()">
+            <img src="restart.png" alt="R" class="restart-icon" id="restartIcon" onclick="restartIconRestart()">
+        </div>
     </div>
     <div class="end-screen-background" id="endScreenBackground">
         <div class="end-screen" id="endScreen">
@@ -164,6 +198,7 @@
     var net2=document.getElementById("net2");
     var bodyDiv=document.getElementById("bodyDiv");
     var restartButton=document.getElementById("restartButton");
+    var pauseButton=document.getElementById("pauseButton");
     var p1UpTimer;
     var p1DownTimer;
     var p1LeftTimer;
@@ -226,6 +261,23 @@
             timerText.innerText=minutes+":0"+seconds;
         }
     }
+    function changePausedness(){
+        if(pauseButton.getAttribute("src")=="pause.png"){
+            pauseButton.src="play.png";
+            pauseButton.alt="I>";
+            clearInterval(timerTimer);
+        } else {
+            pauseButton.src="pause.png";
+            pauseButton.alt="| |";
+            timerTimer=window.setInterval(changeTimer,1000);
+        }
+    }
+    function restartIconRestart(){ //restarting prematurely doesn't clear timers because that happens in endgame
+        clearInterval(timerTimer);
+        clearInterval(playerTimer);
+        clearInterval(collisionTimer);
+        restart();
+    }
     function restart(){
         endScreenBackground.style.display="none";
         playerTimer=window.setInterval(checkPlayer,1);
@@ -243,6 +295,8 @@
         player1.style.left=5+"%";
         player2.style.top=50+"%";
         player2.style.left=95+"%";
+        player1.style.opacity=100+"%";
+        player2.style.opacity=100+"%";
         loadThings();
     }
     function endGame(){
