@@ -17,7 +17,7 @@
             position: absolute;
             z-index: -1;
         }
-        .player1, .player2, .ball {
+        .player1, .player2, .ball, .speed-boost {
             position: absolute;
             width: 60px;
             height: 60px;
@@ -43,6 +43,11 @@
             border: 10px dashed black;
             left: 50%;
             z-index: -1;
+        }
+        .speed-boost {
+            background-color: yellow;
+            z-index: -1;
+            display: none;
         }
         .net1, .net2 {
             display: none;
@@ -152,6 +157,9 @@
             -ms-transform: translateX(-50%);
             transform: translateX(-50%);
         }
+        .endScreenGraph {
+            
+        }
     </style>
 </head>
 <body onload="loadThings()">
@@ -159,6 +167,8 @@
     <div class="player1" id="player1">
     </div>
     <div class="player2" id="player2">
+    </div>
+    <div class="speed-boost" id="speedBoost">
     </div>
     <div class="invincible-bar" id="invincibleBar"></div>
     <div class="ball" id="ball">
@@ -182,6 +192,7 @@
             <p class="small-text">Time tagged:</p>
             <p class="small-text" style="display:inline-block" id="redSecondsText">Red: </p>
             <p class="small-text" style="display:inline-block" id="blueSecondsText">Blue: </p>
+            <div class="end-screen-graph" id="endScreenGraph"></div>
             <button onclick="restart()" class="restart-button" id="restartButton">Play Again</button>
         </div>
     </div>
@@ -199,6 +210,9 @@
     var bodyDiv=document.getElementById("bodyDiv");
     var restartButton=document.getElementById("restartButton");
     var pauseButton=document.getElementById("pauseButton");
+    var endScreenGraph=document.getElementById("endScreenGraph");
+    var speedBoost=document.getElementById("speedBoost");
+    var endScreenGraphArray=[];
     var p1UpTimer;
     var p1DownTimer;
     var p1LeftTimer;
@@ -218,6 +232,10 @@
     var redTaggedMinutes=0;
     var blueTaggedMinutes=0;
     var startingTagger;
+    var speedBoostOn=false; //still has problems
+    var speedBoostPlayer;
+    var p1MoveAmount=2;
+    var p2MoveAmount=2;
     var winningText="Error: winner cannot be calculated";
     var playerTimer=window.setInterval(checkPlayer,1);
     var collisionTimer=window.setInterval(checkCollision,1);
@@ -272,6 +290,25 @@
             timerTimer=window.setInterval(changeTimer,1000);
         }
     }
+    function makeSpeedBoost(){
+        if(speedBoostPlayer=="player1"){
+            p1MoveAmount=3;
+            setTimeout(resetPlayerMoveAmounts, 3000);
+        } else if(speedBoostPlayer=="player2"){
+            setTimeout(resetPlayerMoveAmounts, 3000);
+            p2MoveAmount=3;
+        }
+    }
+    function resetPlayerMoveAmounts(){
+        p1MoveAmount=2;
+        p2MoveAmount=2;
+        setTimeout(spawnSpeedBoost, random(1000,10000));
+    }
+    function spawnSpeedBoost(){
+        speedBoost.style.left=random(0,bodyDiv.offsetWidth-speedBoost.offsetWidth)+"px";
+        speedBoost.style.top=random(0,bodyDiv.offsetHeight-speedBoost.offsetHeight)+"px";
+        speedBoost.style.display="block";
+    }
     function restartIconRestart(){ //restarting prematurely doesn't clear timers because that happens in endgame
         clearInterval(timerTimer);
         clearInterval(playerTimer);
@@ -285,6 +322,7 @@
         timerTimer=window.setInterval(changeTimer,1000);
         timerText.innerText="1:00";
         pressedKeys={};
+        endScreenGraphArray=[];
         seconds=0;
         minutes=1;
         redTaggedSeconds=0;
@@ -297,6 +335,7 @@
         player2.style.left=95+"%";
         player1.style.opacity=100+"%";
         player2.style.opacity=100+"%";
+        speedBoost.style.display="none";
         loadThings();
     }
     function endGame(){
@@ -345,6 +384,8 @@
                 invincible="player1";
                 invincibleBar.style.width=60+"px";
                 tagged="player2";
+                endScreenGraphArray[endScreenGraphArray.length]="blue";
+                endScreenGraphArray[endScreenGraphArray.length]=seconds;
             }
             else if(tagged=="player2"&&invincible=="none"){
                 player1.style.opacity=50+"%";
@@ -354,33 +395,46 @@
                 invincible="player2";
                 invincibleBar.style.width=60+"px";
                 tagged="player1";
+                endScreenGraphArray[endScreenGraphArray.length]="red";
+                endScreenGraphArray[endScreenGraphArray.length]=seconds;
+            }
+        }
+        if(speedBoostOn){
+            if(isCollision(player1,speedBoost)){
+                speedBoostPlayer="player1";
+                speedBoost.style.display="none";
+                makeSpeedBoost();
+            } else if(isCollision(player2,speedBoost)){
+                speedBoostPlayer="player2";
+                speedBoost.style.display="none";
+                makeSpeedBoost();
             }
         }
     }
     function checkPlayer(){
         if(pressedKeys[87]){
-            player1.style.top=player1.offsetTop-2+"px";
+            player1.style.top=player1.offsetTop-p1MoveAmount+"px";
         }
         if(pressedKeys[83]){
-            player1.style.top=player1.offsetTop+2+"px";
+            player1.style.top=player1.offsetTop+p1MoveAmount+"px";
         }
         if(pressedKeys[65]){
-            player1.style.left=player1.offsetLeft-2+"px";
+            player1.style.left=player1.offsetLeft-p1MoveAmount+"px";
         }
         if(pressedKeys[68]){
-            player1.style.left=player1.offsetLeft+2+"px";
+            player1.style.left=player1.offsetLeft+p1MoveAmount+"px";
         }
         if(pressedKeys[38]){
-            player2.style.top=player2.offsetTop-2+"px";
+            player2.style.top=player2.offsetTop-p2MoveAmount+"px";
         }
         if(pressedKeys[40]){
-            player2.style.top=player2.offsetTop+2+"px";
+            player2.style.top=player2.offsetTop+p2MoveAmount+"px";
         }
         if(pressedKeys[37]){
-            player2.style.left=player2.offsetLeft-2+"px";
+            player2.style.left=player2.offsetLeft-p2MoveAmount+"px";
         }
         if(pressedKeys[39]){
-            player2.style.left=player2.offsetLeft+2+"px";
+            player2.style.left=player2.offsetLeft+p2MoveAmount+"px";
         }
         if(player1.offsetLeft<0){
             player1.style.left=0;
@@ -470,6 +524,9 @@
         }
         else{return false;}
     }
+    function random(min, max) {
+        return Math.floor(Math.random() * (max - min) ) + min;
+    }
     function loadThings(){
         player2.style.left=player2.offsetLeft-player2.offsetWidth+"px";
         ball.style.left=ball.offsetLeft-ball.offsetWidth/2+"px";
@@ -495,6 +552,9 @@
             }
             else if(tagged=="player2"){
                 player2.style.opacity=50+"%";
+            }
+            if(speedBoostOn){
+               setTimeout(spawnSpeedBoost, random(1000,10000));
             }
         }
     }
